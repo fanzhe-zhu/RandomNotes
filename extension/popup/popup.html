@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>RandomNotes</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="rn-header">
+      <h1>Saved notes</h1>
+      <div class="rn-header-actions">
+        <button id="continue-draft" type="button" class="rn-link">Continue current draft</button>
+        <button id="new-note" type="button" class="rn-link">+ New note</button>
+        <button id="open-options" type="button" class="rn-link">Settings</button>
+      </div>
+    </header>
+
+    <div id="empty" class="rn-empty">
+      No saved notes yet. Highlight text on a page and click <strong>+ RandomNote</strong>,
+      or press <kbd>Ctrl/Cmd</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>.
+    </div>
+
+    <ul id="notes" class="rn-notes"></ul>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
