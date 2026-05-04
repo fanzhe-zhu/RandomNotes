@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>RandomNotes — Settings</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main>
+      <h1>RandomNotes settings</h1>
+      <p class="rn-help">
+        Summarize and Organize call the Anthropic Claude API directly from your
+        browser. Your API key is stored locally in
+        <code>chrome.storage.local</code> and is never sent anywhere except
+        Anthropic.
+      </p>
+
+      <label for="apiKey">Anthropic API key</label>
+      <input id="apiKey" type="password" placeholder="sk-ant-..." autocomplete="off" />
+
+      <label for="model">Model</label>
+      <select id="model">
+        <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (fast, cheap)</option>
+        <option value="claude-sonnet-4-6">Claude Sonnet 4.6 (balanced)</option>
+        <option value="claude-opus-4-7">Claude Opus 4.7 (highest quality)</option>
+      </select>
+
+      <h2>Prompts</h2>
+      <p class="rn-help">
+        These are sent as the <code>system</code> field of the Claude API call.
+        The user message is just your raw notes, unmodified. Edit to taste —
+        leave blank to use the defaults.
+      </p>
+
+      <label for="summarizePrompt">Summarize prompt</label>
+      <textarea id="summarizePrompt" rows="8" spellcheck="false"></textarea>
+      <button id="resetSummarize" type="button" class="rn-link">Reset to default</button>
+
+      <label for="organizePrompt">Organize prompt</label>
+      <textarea id="organizePrompt" rows="10" spellcheck="false"></textarea>
+      <button id="resetOrganize" type="button" class="rn-link">Reset to default</button>
+
+      <div class="rn-actions">
+        <button id="save" type="button">Save</button>
+        <span id="status" aria-live="polite"></span>
+      </div>
+
+      <h2>Shortcuts</h2>
+      <ul>
+        <li><kbd>Ctrl/Cmd</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> — add current selection to draft</li>
+        <li><kbd>Ctrl/Cmd</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> — open the saved-notes popup</li>
+        <li>Or highlight text and click the floating <strong>+ RandomNote</strong> button</li>
+      </ul>
+      <p class="rn-help">
+        Customize shortcuts at <code>chrome://extensions/shortcuts</code>.
+      </p>
+    </main>
+
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

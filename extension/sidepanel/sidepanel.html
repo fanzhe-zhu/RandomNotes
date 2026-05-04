@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>RandomNotes — Draft</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <header class="rn-header">
+      <h1 id="note-title">Untitled draft</h1>
+      <div class="rn-header-actions">
+        <button id="new-note" class="rn-link" type="button">+ New note</button>
+        <button id="open-saved" class="rn-link" type="button">Saved notes</button>
+      </div>
+    </header>
+
+    <main class="rn-main">
+      <select id="variant" class="rn-variant" aria-label="View">
+        <option value="raw">Random notes</option>
+        <option value="organized">Organized</option>
+        <option value="summary">Summary</option>
+      </select>
+
+      <div
+        id="body"
+        class="rn-body"
+        contenteditable="true"
+        spellcheck="true"
+        data-placeholder="Highlight text on any page, then click + RandomNote or press Ctrl/Cmd+Shift+S to drop it here."
+      ></div>
+
+      <div id="status" class="rn-status" aria-live="polite"></div>
+
+      <div class="rn-actions">
+        <button id="save" type="button" class="rn-primary">Save note</button>
+        <button id="summarize" type="button">Summarize</button>
+        <button id="organize" type="button">Organize</button>
+        <button id="clear" type="button" class="rn-danger">Clear</button>
+      </div>
+    </main>
+
+    <script type="module" src="sidepanel.js"></script>
+  </body>
+</html>
