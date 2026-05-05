@@ -23,18 +23,32 @@ const newNoteBtn = document.getElementById("new-note");
 let draft = emptyDraft();
 let saveTimer = null;
 let lastRenderedAt = 0;
+const ownWriteTimes = new Set();
+let lastStoredVariants = { raw: "", organized: "", summary: "" };
+let lastStoredRefsLen = 0;
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== "local" || !changes[DRAFT_KEY]) return;
   const next = changes[DRAFT_KEY].newValue;
   if (!next) {
     draft = emptyDraft();
+    snapshotStored(draft);
     render({ scrollToEnd: false });
     return;
   }
+  if (ownWriteTimes.has(next.updatedAt)) {
+    ownWriteTimes.delete(next.updatedAt);
+    return;
+  }
   if ((next.updatedAt || 0) <= lastRenderedAt) return;
+  if (saveTimer != null && isCaptureAppendPattern(next)) {
+    mergeCaptureAppend(next);
+    return;
+  }
   clearTimeout(saveTimer);
+  saveTimer = null;
   draft = next;
+  snapshotStored(draft);
   render({ scrollToEnd: true });
   setStatus(`Updated — viewing ${VARIANT_LABEL[draft.activeVariant] || "draft"}.`, "success");
 });
@@ -60,9 +74,7 @@ variantEl.addEventListener("change", async () => {
   draft.activeVariant = variantEl.value;
   bodyEl.innerHTML = currentBody();
   updatePlaceholder();
-  draft.updatedAt = Date.now();
-  lastRenderedAt = draft.updatedAt;
-  await setDraft(draft);
+  await persistOwnDraft();
   setStatus(`Viewing ${VARIANT_LABEL[draft.activeVariant]}.`, "");
 });
 
@@ -155,7 +167,59 @@ newNoteBtn.addEventListener("click", async () => {
 
 async function refreshFromStorage() {
   draft = await getDraft();
+  snapshotStored(draft);
   render({ scrollToEnd: true });
+}
+
+async function persistOwnDraft() {
+  draft.updatedAt = Date.now();
+  ownWriteTimes.add(draft.updatedAt);
+  setTimeout(() => ownWriteTimes.delete(draft.updatedAt), 10_000);
+  lastRenderedAt = draft.updatedAt;
+  snapshotStored(draft);
+  await setDraft(draft);
+}
+
+function snapshotStored(d) {
+  lastStoredVariants = {
+    raw: d.variants?.raw || "",
+    organized: d.variants?.organized || "",
+    summary: d.variants?.summary || ""
+  };
+  lastStoredRefsLen = Array.isArray(d.references) ? d.references.length : 0;
+}
+
+function isCaptureAppendPattern(next) {
+  const nextRefsLen = Array.isArray(next.references) ? next.references.length : 0;
+  if (nextRefsLen <= lastStoredRefsLen) return false;
+  if ((next.variants?.organized || "") !== lastStoredVariants.organized) return false;
+  if ((next.variants?.summary || "") !== lastStoredVariants.summary) return false;
+  const nextRaw = next.variants?.raw || "";
+  return nextRaw.startsWith(lastStoredVariants.raw) && nextRaw.length > lastStoredVariants.raw.length;
+}
+
+function mergeCaptureAppend(next) {
+  // The user is mid-edit. Capture their pending body content into local
+  // state, append the new blockquote(s) directly to the DOM (preserving
+  // cursor and selection), absorb the new references, then re-persist
+  // so storage reflects the merged result.
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  draft.variants[draft.activeVariant] = bodyEl.innerHTML;
+  const nextRaw = next.variants?.raw || "";
+  const tail = nextRaw.slice(lastStoredVariants.raw.length);
+  if (draft.activeVariant === "raw") {
+    bodyEl.insertAdjacentHTML("beforeend", tail);
+    draft.variants.raw = bodyEl.innerHTML;
+    requestAnimationFrame(() => {
+      bodyEl.scrollTop = bodyEl.scrollHeight;
+    });
+  } else {
+    draft.variants.raw = nextRaw;
+  }
+  draft.references = Array.isArray(next.references) ? next.references : draft.references;
+  void persistOwnDraft();
+  setStatus(`Captured — added to your draft.`, "success");
 }
 
 function emptyDraft() {
@@ -196,6 +260,10 @@ async function runAi(messageType, targetVariant, btn, busyLabel) {
     const res = await chrome.runtime.sendMessage({ type: messageType, text: sourceText });
     if (!res?.ok) throw new Error(res?.error || "Request failed.");
     draft = await setVariant(targetVariant, res.text);
+    ownWriteTimes.add(draft.updatedAt);
+    setTimeout(() => ownWriteTimes.delete(draft.updatedAt), 10_000);
+    snapshotStored(draft);
+    lastRenderedAt = draft.updatedAt;
     render({ scrollToEnd: false });
     setStatus(`Done. Viewing ${VARIANT_LABEL[targetVariant]}. Save when ready.`, "success");
   } catch (err) {
@@ -209,9 +277,8 @@ async function runAi(messageType, targetVariant, btn, busyLabel) {
 function scheduleSave() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
-    draft.updatedAt = Date.now();
-    lastRenderedAt = draft.updatedAt;
-    await setDraft(draft);
+    saveTimer = null;
+    await persistOwnDraft();
   }, 250);
 }
 

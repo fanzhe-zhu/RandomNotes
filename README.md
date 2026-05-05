@@ -98,8 +98,9 @@ clears so the next capture starts fresh.
 
 ### 4. Manage saved notes
 
-Click the **RN** toolbar icon (or press **Ctrl/Cmd+Shift+N**) to open the
-saved-notes popup:
+Click the **RN** toolbar icon (or press **Alt+Shift+N** — Option+Shift+N on
+macOS) to open the saved-notes popup. The shortcut can be remapped at
+`chrome://extensions/shortcuts`.
 
 - **Click a row** to reopen that note in the side panel — you can keep
   editing and switch between its variants. Save again to update it in place.
